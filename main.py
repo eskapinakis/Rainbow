@@ -1,7 +1,7 @@
-from field import Field
+from rainbow import Rainbow
 
 
-K = Field.Field(12)
+R = Rainbow.Rainbow(13)
 
 
 def interact():
@@ -11,7 +11,7 @@ def interact():
     else:
         x1 = int(input("first element: "))
         x2 = int(input("second element: "))
-        print(K.operation(x1, x2, option))
+        print(R.operation(x1, x2, option))
         interact()
 
 
