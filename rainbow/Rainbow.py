@@ -24,8 +24,8 @@ class Rainbow:
     def __init__(self):
         self.K = Field.Field(29)
 
-    def operation(self, x1, x2, op):
-        return self.K.operation(x1, x2, op)
+    def op(self, x1, x2, op):
+        return self.K.op(x1, x2, op)
 
     def poly(self, l, k, x):
         return self.n
