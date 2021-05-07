@@ -1,8 +1,7 @@
-
-
 class Field:
 
     order = 0
+
 
     def __init__(self, order):
         self.order = order

@@ -1,7 +1,7 @@
 from rainbow import Rainbow
 
 
-R = Rainbow.Rainbow(13)
+R = Rainbow.Rainbow()
 
 
 def interact():
