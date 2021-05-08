@@ -1,8 +1,11 @@
-from field import Field
+# from field import Field
+import random as rand
+from pyfinite import ffield as ff  # k=ff.FField(8)
+
 
 class Rainbow:
-
-    K = Field.Field(0)
+    K = ff.FField(8)
+    order = 0
     n = 0  # total number of variables
     u = 0  # partition size
     v = []  # numbers that create the partition
@@ -11,7 +14,7 @@ class Rainbow:
     O = []  # O[i] = S[i+1]\S[i] for i in 1,..,u-1
 
     alpha = []  # alpha[l][k][i][j] is the coefficient of oil-vinegar of layer l poly k
-    beta = []  # alpha[l][k][i][j] is the coefficient of vinegar-vinegar of layer l poly k
+    beta = []  # beta[l][k][i][j] is the coefficient of vinegar-vinegar of layer l poly k
     gamma = []  # gamma[l][k][i] is the linear term coefficient poly k
     eta = []  # eta[l][k] is the constant of each layer poly k
 
@@ -22,13 +25,76 @@ class Rainbow:
     privateKey = 0
 
     def __init__(self):
-        self.K = Field.Field(29)
+        K = ff.FField(8)  # K.sum(x1,x2)
+        self.order = 2 ** 8
+        self.n = 33
+        self.u = 5
+        self.v = [6, 12, 17, 22, 33]
+        self.o = [6, 5, 5, 11]
+        self.S = [[i for i in range(v)] for v in self.v]
+        self.O = [[j for j in range(self.v[i], self.v[i + 1])] for i in range(len(self.v) - 1)]
+
+        # u-1 e o numero de camadas
+        # o[l] e o numero de polys
+        # os outros sao o numero de variaveis oil ou vinegar
+        self.alpha = [[[[rand.randint(0, self.order - 1) for _ in self.O[l]] for _ in self.S[l]] for
+                       _ in range(self.o[l])] for l in range(self.u - 1)]
+
+        self.beta = [[[[rand.randint(0, self.order - 1) for _ in self.S[l]] for _ in self.S[l]] for
+                      _ in range(self.o[l])] for l in range(self.u - 1)]
+
+        self.gamma = [[[rand.randint(0, self.order - 1) for _ in self.S[l+1]] for _ in range(self.o[l])]
+                      for l in range(self.u-1)]
+
+        self.eta = [[rand.randint(0, self.order - 1) for _ in range(self.o[l])] for l in range(self.u-1)]
+
+    # l is the layer
+    # k is the index of the poly
+    # x is the variables
+    def poly(self, l, k, x):
+        eval = self.eta[l][k]
+        eval = self.K.Add(eval, self.oilVin(l, k, x))
+        eval = self.K.Add(eval, self.vinVin(l, k, x))
+        eval = self.K.Add(eval, self.linear(l, k, x))
+        return eval
+
+    def oilVin(self, l, k, x):
+        eval = 0
+        for i in range(self.o[l]):
+            for j in self.S[l]:
+                var = self.K.Multiply(x[i], x[j])
+                eval = self.K.Add(eval, self.K.Multiply(self.alpha[l][k][j][i], var))
+        return eval
+
+    def vinVin(self, l, k, x):
+        eval = 0
+        for i in self.S[l]:
+            for j in self.S[l]:
+                var = self.K.Multiply(x[i], x[j])
+                eval = self.K.Add(eval, self.K.Multiply(self.beta[l][k][i][j], var))
+        return eval
+
+    def linear(self, l, k, x):
+        eval = 0
+        for i in self.S[l+1]:
+            eval = self.K.Add(eval, self.K.Multiply(self.gamma[l][k][i], x[i]))
+        return eval
 
     def op(self, x1, x2, op):
         return self.K.op(x1, x2, op)
 
-    def poly(self, l, k, x):
-        return self.n
+    # x should be an array x1,...,xn
+    # F goes from K^n to K^{n-v1}
+    def F(self, x):
+        m = self.n - self.v[0]
+        result = [0] * m  # (0,...,0)
+        for l in range(self.u-1):
+            for k in range(self.o[l]):
+                result[self.index(l, k)] = self.poly(l, k, x)
+        return result
+
+    def index(self, l, k):
+        return (self.v[l]-self.v[0])+k
 
     def sign(self, m):
         return self.n
