@@ -49,18 +49,47 @@ class Rainbow:
 
         self.eta = [[rand.randint(0, self.order - 1) for _ in range(self.o[l])] for l in range(self.u-1)]
 
-        self.L1 = self.invertibleMatrix(self.n-self.v[1])
+        self.L1 = self.invertibleMatrix(self.n-self.v[0])
         self.L2 = self.invertibleMatrix(self.n)
 
-        for i in self.L1:
-            print(i)
+        #print(self.L1)
+        #print(self.L1.Determinant())
+        #print(self.L1*self.L1.Inverse())
 
-        #m1 = [[1,4,6],[0,1,3],[0,0,1]]
-        #m2 = [[1,0,0],[8,1,0],[13,2,1]]
-        #for i in self.matrixProd(3, m1, m2):
-        #    print(i)
+        #a = [[1,1],[1,1]]
+        #b = [1,3]
+        #print(self.matrixVectorProd(a,b))
 
-    def invertibleMatrix(self,n):
+
+    def matrixVectorProd(self, m1, m2):
+        n = len(m1)
+        m = len(m2)
+        matrix = [0 for _ in range(n)]
+        for i in range(n):
+            entry = 0
+            for j in range(m):
+                entry = self.K.Add(entry, self.K.Multiply(m1[i][j], m2[j]))
+                # entry += m1[i][j]*m2[j]
+            matrix[i] = entry
+        return matrix
+
+    # product of two matrices
+    def matrixProd(self, m1, m2):
+        n = len(m1)
+        m = len(m2[0])
+        N = len(m2)
+        matrix = [[0 for _ in range(n)] for _ in range(m)]
+        for i in range(n):
+            for j in range(m):
+                entry = 0
+                for k in range(N):
+                    entry = self.K.Add(entry, self.K.Multiply(m1[i][k], m2[k][j]))
+                    # entry += m1[i][k]*m2[k][j]
+                matrix[i][j] = entry
+        return matrix
+
+    # Creates an invertible matrix of size n
+    def invertibleMatrix(self, n):
         matrix1 = [[0 for _ in range(n)] for _ in range(n)]
         matrix2 = [[0 for _ in range(n)] for _ in range(n)]
         for i in range(n):
@@ -68,22 +97,26 @@ class Rainbow:
                 matrix1[i][j] = rand.randint(0, self.order-1)
                 matrix2[n-i-1][n-j-1] = rand.randint(0, self.order - 1)
         for i in range(n):
-            matrix1[i][i] = 1
-            matrix2[i][i] = 1
-        return self.matrixProd(n, matrix1, matrix2)
+            matrix1[i][i] = rand.randint(1, self.order-1)
+            matrix2[i][i] = rand.randint(1, self.order - 1)
 
-    def matrixProd(self, n, m1, m2):
-        matrix = [[0 for _ in range(n)] for _ in range(n)]
+        SUM = lambda x, y: self.K.Add(x, y)
+        SUB = lambda x, y: self.K.Subtract(x, y)
+        PROD = lambda x, y: self.K.Multiply(x, y)
+        DIV = lambda x, y: self.K.Divide(x, y)
+
+        m1 = gm.GenericMatrix(size=(n, n), zeroElement=0, identityElement=1, add=SUM, mul=PROD, sub=SUB, div=DIV)
         for i in range(n):
-            for j in range(n):
-                entry = 0
-                for k in range(n):
-                    entry = self.K.Add(entry, self.K.Multiply(m1[k][i], m2[j][k]))
-                    #entry += m1[k][i]*m2[j][k]
-                matrix[i][j] = entry
-        return matrix
+            m1.SetRow(i, matrix1[i])
+        m2 = gm.GenericMatrix(size=(n, n), zeroElement=0, identityElement=1, add=SUM, mul=PROD, sub=SUB, div=DIV)
+        for i in range(n):
+            m2.SetRow(i, matrix2[i])
 
-
+        #matrix = self.matrixProd(matrix1, matrix2)
+        #v = gm.GenericMatrix(size=(n, n), zeroElement=0, identityElement=1, add=SUM, mul=PROD, sub=SUB, div=DIV)
+        #for i in range(n):
+        #    v.SetRow(i, matrix[i])
+        return m1*m2
 
     # l is the layer
     # k is the index of the poly
@@ -95,6 +128,7 @@ class Rainbow:
         eval = self.K.Add(eval, self.linear(l, k, x))
         return eval
 
+    # sum of oil-vinegar coefficients
     def oilVin(self, l, k, x):
         eval = 0
         for i in range(self.o[l]):
@@ -103,6 +137,7 @@ class Rainbow:
                 eval = self.K.Add(eval, self.K.Multiply(self.alpha[l][k][j][i], var))
         return eval
 
+    # sum of vinegar-vinegar coefficients
     def vinVin(self, l, k, x):
         eval = 0
         for i in self.S[l]:
@@ -111,14 +146,12 @@ class Rainbow:
                 eval = self.K.Add(eval, self.K.Multiply(self.beta[l][k][i][j], var))
         return eval
 
+    # sum of linear coefficients
     def linear(self, l, k, x):
         eval = 0
         for i in self.S[l+1]:
             eval = self.K.Add(eval, self.K.Multiply(self.gamma[l][k][i], x[i]))
         return eval
-
-    def op(self, x1, x2, op):
-        return self.K.op(x1, x2, op)
 
     # x should be an array x1,...,xn
     # F goes from K^n to K^{n-v1}
@@ -129,6 +162,42 @@ class Rainbow:
             for k in range(self.o[l]):
                 result[self.index(l, k)] = self.poly(l, k, x)
         return result
+
+    def FTilde(self, x):
+        L2 = self.makeArrayFromMatrix(self.L2)
+        L1 = self.makeArrayFromMatrix(self.L1)
+        a = self.matrixVectorProd(L2, x)
+        b = self.F(a)
+        c = self.matrixVectorProd(L1, b)
+        return c  # L1 o F o L2(x)
+
+    def FTildeInverse(self, y):
+        L2 = self.makeArrayFromMatrix(self.L2.Inverse())
+        L1 = self.makeArrayFromMatrix(self.L1.Inverse())
+        y = self.matrixVectorProd(L1, y)
+        y = self.F(y)
+        y = self.matrixVectorProd(L2, y)
+        return y  # L2^{-1} o F^{-1} o L1^{-1}(x)
+
+    def findSolution(self, y):
+        L2 = self.makeArrayFromMatrix(self.L2.Inverse())
+        L1 = self.makeArrayFromMatrix(self.L1.Inverse())
+        y = self.matrixVectorProd(L1, y)
+        x = [0]*self.n
+        for i in range(self.v[0]):
+            x[i] = rand.randint(0, self.order-1)
+
+        for l in range(self.u-1):
+            Y = y[0:self.v[l]]
+            for k in range(self.o[l]):
+                Y = [Y[i]-self.eta[i] for i in range(self.v[l])]
+                Y = [Y[i] - self.vinVin(l, k, x[0:self.v[l]]) for i in range(self.v[l])]
+                Y = [Y[i] - self.linear(l-1, k, x[0:self.v[l]]) for i in range(self.v[l])]
+
+    def makeArrayFromMatrix(self, matrix):
+        n = matrix.Size()[0]
+        matrixArray = [matrix.GetRow(i) for i in range(n)]
+        return matrixArray
 
     def index(self, l, k):
         return (self.v[l]-self.v[0])+k
