@@ -1,6 +1,7 @@
 # from field import Field
 import random as rand
 from pyfinite import ffield as ff  # k=ff.FField(8)
+from pyfinite import genericmatrix as gm
 
 
 class Rainbow:
@@ -25,7 +26,7 @@ class Rainbow:
     privateKey = 0
 
     def __init__(self):
-        K = ff.FField(8)  # K.sum(x1,x2)
+        self.K = ff.FField(8)  # K.sum(x1,x2)
         self.order = 2 ** 8
         self.n = 33
         self.u = 5
@@ -47,6 +48,42 @@ class Rainbow:
                       for l in range(self.u-1)]
 
         self.eta = [[rand.randint(0, self.order - 1) for _ in range(self.o[l])] for l in range(self.u-1)]
+
+        self.L1 = self.invertibleMatrix(self.n-self.v[1])
+        self.L2 = self.invertibleMatrix(self.n)
+
+        for i in self.L1:
+            print(i)
+
+        #m1 = [[1,4,6],[0,1,3],[0,0,1]]
+        #m2 = [[1,0,0],[8,1,0],[13,2,1]]
+        #for i in self.matrixProd(3, m1, m2):
+        #    print(i)
+
+    def invertibleMatrix(self,n):
+        matrix1 = [[0 for _ in range(n)] for _ in range(n)]
+        matrix2 = [[0 for _ in range(n)] for _ in range(n)]
+        for i in range(n):
+            for j in range(i):
+                matrix1[i][j] = rand.randint(0, self.order-1)
+                matrix2[n-i-1][n-j-1] = rand.randint(0, self.order - 1)
+        for i in range(n):
+            matrix1[i][i] = 1
+            matrix2[i][i] = 1
+        return self.matrixProd(n, matrix1, matrix2)
+
+    def matrixProd(self, n, m1, m2):
+        matrix = [[0 for _ in range(n)] for _ in range(n)]
+        for i in range(n):
+            for j in range(n):
+                entry = 0
+                for k in range(n):
+                    entry = self.K.Add(entry, self.K.Multiply(m1[k][i], m2[j][k]))
+                    #entry += m1[k][i]*m2[j][k]
+                matrix[i][j] = entry
+        return matrix
+
+
 
     # l is the layer
     # k is the index of the poly

@@ -20,10 +20,10 @@ if __name__ == '__main__':
     R = Rainbow.Rainbow()
 
     x = [0]*33
-    print(R.F(x))
-    print("")
-    print(R.eta)
+    #print(R.F(x))
+    #print("")
+    #print(R.eta)
 
-    interact()
+    # interact()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
