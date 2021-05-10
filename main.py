@@ -8,15 +8,19 @@ sm = SignatureManager.SignatureManager()
 def manage(option, sm):
     if option == "new user":
         name = input("name: ").rstrip("\n")
+        password = input("password: ").rstrip("\n")
         ms = int(input("message size: ").rstrip("\n"))
-        sm.newUser(name, ms)
+        sm.newUser(name, ms, password)
 
     elif option == "see users":
         sm.seeUsers()
 
     elif option == "log in":
         name = input("name: ").rstrip("\n")
-        sm.logIn(name)
+        password = input("password: ").rstrip("\n")
+        sm.logIn(name, password)
+        if sm.currentUser != 0:
+            print("hello ", name)
 
     elif option == "log out":
         name = sm.currentUser.name
@@ -34,6 +38,10 @@ def manage(option, sm):
     elif option == "verify message":
         message = int(input("message: ").rstrip("\n"))
         print(sm.verifyDocument(message))
+
+    elif option == "current user":
+        print(sm.currentUser.name)
+
     else:
         print(option, 'is not a valid command')
 
