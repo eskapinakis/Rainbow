@@ -52,6 +52,8 @@ class Rainbow:
         self.L1 = self.invertibleMatrix(self.n-self.v[0])
         self.L2 = self.invertibleMatrix(self.n)
 
+
+
         #print(self.L1)
         #print(self.L1.Determinant())
         #print(self.L1*self.L1.Inverse())
@@ -99,6 +101,7 @@ class Rainbow:
         for i in range(n):
             matrix1[i][i] = rand.randint(1, self.order-1)
             matrix2[i][i] = rand.randint(1, self.order - 1)
+
 
         SUM = lambda x, y: self.K.Add(x, y)
         SUB = lambda x, y: self.K.Subtract(x, y)
@@ -187,12 +190,51 @@ class Rainbow:
         for i in range(self.v[0]):
             x[i] = rand.randint(0, self.order-1)
 
-        for l in range(self.u-1):
-            Y = y[0:self.v[l]]
-            for k in range(self.o[l]):
-                Y = [Y[i]-self.eta[i] for i in range(self.v[l])]
-                Y = [Y[i] - self.vinVin(l, k, x[0:self.v[l]]) for i in range(self.v[l])]
-                Y = [Y[i] - self.linear(l-1, k, x[0:self.v[l]]) for i in range(self.v[l])]
+        # Cada passo do sistema
+        
+        #for l in range(1,self.u-1):
+        l = 1
+            # Queremos resolver A[x] = [b]
+            # Criar novo [b]
+        Y = y[0:self.v[l]]
+
+        for ltemp in range(l):
+            for k in range(self.o[ltemp]):
+                i = self.index(ltemp,k)
+                
+                Y[i] = self.K.Subtract(Y[i], self.eta[ltemp][k])
+                Y[i] = self.K.Subtract(Y[i], self.vinVin(ltemp, k, x[0:self.v[ltemp]]))
+                Y[i] = self.K.Subtract(Y[i], self.linear(ltemp-1, k, x[0:self.v[ltemp]]))
+        
+        # Criar A
+        A = [ [0]*self.o[l] ] * self.o[l]
+        for k in range(self.o[l]):
+            print(self.gamma[l][k])
+            for i in range(self.o[l]):
+
+                A[k][i] = self.gamma[l][k][i]
+                
+                # Somar todos os coeficientes correspondentes à variável óleo x_i
+                for j in self.S[l]:
+                    A[k][i] = self.K.Add( A[k][i], self.K.Multiply(self.alpha[l][k][j][i], x[j] ) )
+        
+
+        SUM = lambda x, y: self.K.Add(x, y)
+        SUB = lambda x, y: self.K.Subtract(x, y)
+        PROD = lambda x, y: self.K.Multiply(x, y)
+        DIV = lambda x, y: self.K.Divide(x, y)
+
+        A_gm = gm.GenericMatrix(size=(self.o[l], self.o[l]), zeroElement=0, identityElement=1, add=SUM, mul=PROD, sub=SUB, div=DIV)
+
+        for k in range(self.o[l]):
+            A_gm.SetRow(k, A[k])
+            
+        #A_inv = A_gm.Inverse()
+
+        return 0
+
+        
+
 
     def makeArrayFromMatrix(self, matrix):
         n = matrix.Size()[0]
