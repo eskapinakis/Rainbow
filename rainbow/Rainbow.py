@@ -25,19 +25,20 @@ class Rainbow:
     publicKey = 0
     privateKey = 0
 
-    def __init__(self):
-        self.K = ff.FField(8)  # K.sum(x1,x2)
-        self.order = 2 ** 8
-        self.n = 33
-        self.u = 5
-        self.v = [6, 12, 17, 22, 33]
-        self.o = [6, 5, 5, 11]
+    def __init__(self, power):
+        self.K = ff.FField(power)  # K.sum(x1,x2)
+        self.order = 2 ** power
+        self.n = 100
+        self.u = 6
+        self.v = [6, 12, 17, 22, 33,100]
+        self.o = [self.v[l] - self.v[l-1] for l in range(1,self.u)]
         self.S = [[i for i in range(v)] for v in self.v]
         self.O = [[j for j in range(self.v[i], self.v[i + 1])] for i in range(len(self.v) - 1)]
 
         # u-1 e o numero de camadas
         # o[l] e o numero de polys
         # os outros sao o numero de variaveis oil ou vinegar
+                        # rand.randint(0, self.order - 1)
         self.alpha = [[[[rand.randint(0, self.order - 1) for _ in self.O[l]] for _ in self.S[l]] for
                        _ in range(self.o[l])] for l in range(self.u - 1)]
 
@@ -136,12 +137,16 @@ class Rainbow:
         eval = 0
         for i in range(self.o[l]):
             for j in self.S[l]:
-                var = self.K.Multiply(x[i], x[j])
+                I = self.O[l][i]
+                var = self.K.Multiply(x[I], x[j])
                 eval = self.K.Add(eval, self.K.Multiply(self.alpha[l][k][j][i], var))
         return eval
 
     # sum of vinegar-vinegar coefficients
     def vinVin(self, l, k, x):
+        # print('l vinvin = ',l)
+        # print('k vinvin = ',k)
+        # print('len(x) vinvin = ',len(x))
         eval = 0
         for i in self.S[l]:
             for j in self.S[l]:
@@ -151,6 +156,9 @@ class Rainbow:
 
     # sum of linear coefficients
     def linear(self, l, k, x):
+        # print('l = ', l)
+        # print('k = ', k)
+        # print('size x = ', len(x))
         eval = 0
         for i in self.S[l+1]:
             eval = self.K.Add(eval, self.K.Multiply(self.gamma[l][k][i], x[i]))
@@ -169,69 +177,86 @@ class Rainbow:
     def FTilde(self, x):
         L2 = self.makeArrayFromMatrix(self.L2)
         L1 = self.makeArrayFromMatrix(self.L1)
-        a = self.matrixVectorProd(L2, x)
-        b = self.F(a)
-        c = self.matrixVectorProd(L1, b)
-        return c  # L1 o F o L2(x)
-
-    def FTildeInverse(self, y):
-        L2 = self.makeArrayFromMatrix(self.L2.Inverse())
-        L1 = self.makeArrayFromMatrix(self.L1.Inverse())
-        y = self.matrixVectorProd(L1, y)
-        y = self.F(y)
-        y = self.matrixVectorProd(L2, y)
-        return y  # L2^{-1} o F^{-1} o L1^{-1}(x)
+        x = self.matrixVectorProd(L2, x)
+        x = self.F(x)
+        x = self.matrixVectorProd(L1, x)
+        return x  # L1 o F o L2(x)
 
     def findSolution(self, y):
-        L2 = self.makeArrayFromMatrix(self.L2.Inverse())
-        L1 = self.makeArrayFromMatrix(self.L1.Inverse())
-        y = self.matrixVectorProd(L1, y)
+        L2_inv = self.makeArrayFromMatrix(self.L2.Inverse())
+        L1_inv = self.makeArrayFromMatrix(self.L1.Inverse())
+        y = self.matrixVectorProd(L1_inv, y)
         x = [0]*self.n
+
+
         for i in range(self.v[0]):
             x[i] = rand.randint(0, self.order-1)
 
         # Cada passo do sistema
-        
-        #for l in range(1,self.u-1):
-        l = 1
+        for l in range(self.u-1):
+        #l = 0
             # Queremos resolver A[x] = [b]
             # Criar novo [b]
-        Y = y[0:self.v[l]]
+            Y = y[self.v[l] - self.v[0]: self.v[l+1] - self.v[0]]
+            # k percorre os índices todos da subcamada
+            for k in range(self.o[l]):
+                #i = self.index(l,k) # identifica o índice em Y dada a camada e subcamada
+                Y[k] = self.K.Subtract(Y[k], self.eta[l][k])
+                Y[k] = self.K.Subtract(Y[k], self.vinVin(l, k, x[0:self.v[l]])) # S[l] = {1,..,v[l]}
 
-        for ltemp in range(l):
-            for k in range(self.o[ltemp]):
-                i = self.index(ltemp,k)
-                
-                Y[i] = self.K.Subtract(Y[i], self.eta[ltemp][k])
-                Y[i] = self.K.Subtract(Y[i], self.vinVin(ltemp, k, x[0:self.v[ltemp]]))
-                Y[i] = self.K.Subtract(Y[i], self.linear(ltemp-1, k, x[0:self.v[ltemp]]))
-        
-        # Criar A
-        A = [ [0]*self.o[l] ] * self.o[l]
-        for k in range(self.o[l]):
-            print(self.gamma[l][k])
-            for i in range(self.o[l]):
+                temp = 0
+                for p in self.S[l]:
+                    temp = self.K.Add(temp, self.K.Multiply(self.gamma[l][k][p] , x[p] ) )
 
-                A[k][i] = self.gamma[l][k][i]
-                
-                # Somar todos os coeficientes correspondentes à variável óleo x_i
-                for j in self.S[l]:
-                    A[k][i] = self.K.Add( A[k][i], self.K.Multiply(self.alpha[l][k][j][i], x[j] ) )
-        
-
-        SUM = lambda x, y: self.K.Add(x, y)
-        SUB = lambda x, y: self.K.Subtract(x, y)
-        PROD = lambda x, y: self.K.Multiply(x, y)
-        DIV = lambda x, y: self.K.Divide(x, y)
-
-        A_gm = gm.GenericMatrix(size=(self.o[l], self.o[l]), zeroElement=0, identityElement=1, add=SUM, mul=PROD, sub=SUB, div=DIV)
-
-        for k in range(self.o[l]):
-            A_gm.SetRow(k, A[k])
+                Y[k] = self.K.Subtract(Y[k], temp) # S[l+1] = S[l] U O[l]
+                # for k in range(self.o[ltemp]):
+                #     i = self.index(ltemp,k) # identifica o índice em Y dada a camada e subcamada
+                    
+                #     Y[i] = self.K.Subtract(Y[i], self.eta[ltemp][k])
+                #     Y[i] = self.K.Subtract(Y[i], self.vinVin(ltemp, k, x[0:self.v[ltemp]])) # S[l] = {1,..,v[l]}
+                #     Y[i] = self.K.Subtract(Y[i], self.linear(ltemp-1, k, x[0:self.v[ltemp]])) # S[l+1] = S[l] U O[l]
             
-        #A_inv = A_gm.Inverse()
+            # Criar A
+            A = [[0 for _ in range(self.o[l]) ] for _ in  range(self.o[l])]
+            for k in range(self.o[l]):
+                
+                for i in range(self.o[l]):
+                    
+                    I = self.O[l][i]
+                    
+                    A[k][i] = self.gamma[l][k][I]
+                    
+                    # Somar todos os coeficientes correspondentes à variável óleo x_i
+                    for j in self.S[l]:
+                        A[k][i] = self.K.Add( A[k][i], self.K.Multiply(self.alpha[l][k][j][i], x[j] ) )
+                
+            # self.alpha = [[[[rand.randint(0, self.order - 1) for _ in self.O[l]] for _ in self.S[l]] for
+            #                                                   _ in range(self.o[l])] for l in range(self.u - 1)] 
+            # alpha[l][k][i][j] is the coefficient of oil-vinegar of layer l poly k
 
-        return 0
+
+            SUM = lambda x, y: self.K.Add(x, y)
+            SUB = lambda x, y: self.K.Subtract(x, y)
+            PROD = lambda x, y: self.K.Multiply(x, y)
+            DIV = lambda x, y: self.K.Divide(x, y)
+            
+            A_gm = gm.GenericMatrix(size=(self.o[l], self.o[l]), zeroElement=0, identityElement=1, add=SUM, mul=PROD, sub=SUB, div=DIV)
+
+            for k in range(self.o[l]):
+                A_gm.SetRow(k, A[k])
+                
+            A_inv = A_gm.Inverse()
+            #print(self.o[l])
+            #print(len(self.makeArrayFromMatrix(A_inv)))
+            #print(len(Y))
+            #return self.v
+            X = self.matrixVectorProd(self.makeArrayFromMatrix(A_inv), Y)
+            
+            x[self.v[l]:self.v[l+1]] = X
+
+        x = self.matrixVectorProd(L2_inv, x)
+
+        return x
 
         
 
@@ -244,8 +269,8 @@ class Rainbow:
     def index(self, l, k):
         return (self.v[l]-self.v[0])+k
 
-    def sign(self, m):
-        return self.n
+    def sign(self, y):
+        return self.findSolution(y)
 
-    def verify(self, m, sign):
-        return self.n
+    def verify(self, m, signature):
+        return m == self.FTilde(signature)
