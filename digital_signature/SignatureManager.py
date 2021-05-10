@@ -11,15 +11,17 @@ class SignatureManager:
         self.users = []
         self.currentUser = 0
 
-    def newUser(self, user_name, message_size):
-        newUser = User.User(user_name, message_size)
+    def newUser(self, user_name, message_size, password):
+        newUser = User.User(user_name, message_size, password)
         self.users.append(newUser)
 
     def logOut(self):
         self.currentUser = 0
 
-    def logIn(self, user_name):
-        self.currentUser = self.findUser(user_name)
+    def logIn(self, user_name, password):
+        user = self.findUser(user_name)
+        if user.password == password:
+            self.currentUser = user
 
     def findUser(self, user_name):
         for user in self.users:

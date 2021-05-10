@@ -1,20 +1,19 @@
 # Class that implements Rainbow Signature Scheme
-import random as rand # to generate pseudo-random numbers
+import random as rand  # to generate pseudo-random numbers
 from pyfinite import ffield as ff  # to make calculations with field k of order 2^n
-from pyfinite import genericmatrix as gm # to make operations with matries in 
+from pyfinite import genericmatrix as gm  # to make operations with matries in
 
 
 class Rainbow:
-
     # Initializaion of variables
-    K = 0       # Field K
-    order = 0   # Number of elements in K
-    n = 0       # Total number of variables
-    u = 0       # Partition size
-    v = []      # Numbers that create the partition
-    S = []      # Vinegar variables of layer l: S[l]
-    o = []      # Number of sublayers of layer l: o[l] = v[l+1] - v[l] for i in 1,..,u-1
-    O = []      # Oil variables of layer l: O[l] = S[l+1]\S[l] for i in 1,..,u-1
+    K = 0  # Field K
+    order = 0  # Number of elements in K
+    n = 0  # Total number of variables
+    u = 0  # Partition size
+    v = []  # Numbers that create the partition
+    S = []  # Vinegar variables of layer l: S[l]
+    o = []  # Number of sublayers of layer l: o[l] = v[l+1] - v[l] for i in 1,..,u-1
+    O = []  # Oil variables of layer l: O[l] = S[l+1]\S[l] for i in 1,..,u-1
 
     alpha = []  # alpha[l][k][i][j] is the coefficient of Oil-Vinegar of layer l poly k
     beta = []  # beta[l][k][i][j] is the coefficient of Vinegar-Vinegar of layer l poly k
@@ -36,16 +35,16 @@ class Rainbow:
         # Creates a random partition for the message space
         self.n = message_size  # The message size is actually n - v[0] = n-1 cause I can
         self.u = partition_size  # u-1 is also the number of Rainbow layers
-        m = int(message_size/(partition_size - 1))
-        self.v = [0]*partition_size
+        m = int(message_size / (partition_size - 1))
+        self.v = [0] * partition_size
         self.v[0] = 1  # rand.randint(1, m)
-        for i in range(1, self.u-1):
-            self.v[i] = rand.randint(self.v[i-1]+1, m*(i+1)-1)
-        self.v[partition_size-1] = self.n  # The last element has to equal the message size
+        for i in range(1, self.u - 1):
+            self.v[i] = rand.randint(self.v[i - 1] + 1, m * (i + 1) - 1)
+        self.v[partition_size - 1] = self.n  # The last element has to equal the message size
 
         # Atribution of variables
         self.o = [self.v[l] - self.v[l - 1] for l in range(1, self.u)]
-        self.S = [[i for i in range(v)] for v in self.v] 
+        self.S = [[i for i in range(v)] for v in self.v]
         self.O = [[j for j in range(self.v[i], self.v[i + 1])] for i in range(len(self.v) - 1)]
 
         self.alpha = [[[[rand.randint(0, self.order - 1) for _ in self.O[l]] for _ in self.S[l]] for
@@ -107,10 +106,10 @@ class Rainbow:
 
     # Calculate de polynomial of layer l, sublayer k and entry x
     def poly(self, l, k, x):
-        eval = self.eta[l][k] # Constant term
-        eval = self.K.Add(eval, self.oilVin(l, k, x)) # Oil-Vinegar terms
-        eval = self.K.Add(eval, self.vinVin(l, k, x)) # Vinegar-Vinegar terms
-        eval = self.K.Add(eval, self.linear(l, k, x)) # Linear terms
+        eval = self.eta[l][k]  # Constant term
+        eval = self.K.Add(eval, self.oilVin(l, k, x))  # Oil-Vinegar terms
+        eval = self.K.Add(eval, self.vinVin(l, k, x))  # Vinegar-Vinegar terms
+        eval = self.K.Add(eval, self.linear(l, k, x))  # Linear terms
         return eval
 
     # Sum of Oil-Vinegar terms
@@ -156,9 +155,10 @@ class Rainbow:
         x = self.matrixVectorProd(L2, x)
         x = self.F(x)
         x = self.matrixVectorProd(L1, x)
-        return x  
+        return x
 
-    # Given y in k^(n-v[0])
+        # Given y in k^(n-v[0])
+
     # Returns x in k^n solution to FTilde(x) = y
     # In other words, it calculates (L2^-1 o F^-1 o L1^-1)(y)
     def findSolution(self, y):
@@ -171,8 +171,8 @@ class Rainbow:
         # Calculating "inverse" of F
         ####################################################################################################
         ####################################################################################################
-        
-        x = [0] * self.n # The solution we are going to construct in parts
+
+        x = [0] * self.n  # The solution we are going to construct in parts
         # Guess the first v[0] elements
         for i in range(self.v[0]):
             x[i] = rand.randint(0, self.order - 1)
@@ -193,14 +193,14 @@ class Rainbow:
                     temp = self.K.Add(temp, self.K.Multiply(self.gamma[l][k][p], x[p]))
 
                 Y[k] = self.K.Subtract(Y[k], temp)
-                
 
             # Create A coefficient matrix
             A = [[0 for _ in range(self.o[l])] for _ in range(self.o[l])]
             for k in range(self.o[l]):
                 for i in range(self.o[l]):
-                    
-                    I = self.O[l][i] # Index to access right index of gamma because gamma has coefficients for S[l+1] = S[l] U O[l]
+
+                    I = self.O[l][
+                        i]  # Index to access right index of gamma because gamma has coefficients for S[l+1] = S[l] U O[l]
                     A[k][i] = self.gamma[l][k][I]
 
                     # Sum all coefficients corresponding to Oil variable x_i
@@ -220,13 +220,13 @@ class Rainbow:
                 A_gm.SetRow(k, A[k])
 
             A_inv = A_gm.Inverse()
-            
-            X = self.matrixVectorProd(self.makeArrayFromMatrix(A_inv), Y) # Solution of the system of layer l
 
-            x[self.v[l]:self.v[l + 1]] = X # Add solution to the final solution
+            X = self.matrixVectorProd(self.makeArrayFromMatrix(A_inv), Y)  # Solution of the system of layer l
+
+            x[self.v[l]:self.v[l + 1]] = X  # Add solution to the final solution
             ####################################################################################################
             ####################################################################################################
-        
+
         x = self.matrixVectorProd(L2_inv, x)
 
         return x
