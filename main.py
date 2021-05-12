@@ -1,26 +1,31 @@
-from rainbow import Rainbow
-# from digital_signature import SignatureManager
+# from rainbow import Rainbow
+from digital_signature import SignatureManager
 # from digital_signature import User
 
-# sm = SignatureManager.SignatureManager()
+sm = SignatureManager.SignatureManager()
 
 
-def manage(option, sm):
+def manage(option):
     if option == "new user":
         name = input("name: ").rstrip("\n")
         password = input("password: ").rstrip("\n")
-        ms = int(input("message size: ").rstrip("\n"))
-        sm.newUser(name, ms, password)
+        if not sm.newUser(name, password):  # if there is someone with that name already
+            print("There is someone with that name already")
 
     elif option == "see users":
         sm.seeUsers()
 
     elif option == "log in":
         name = input("name: ").rstrip("\n")
-        password = input("password: ").rstrip("\n")
-        sm.logIn(name, password)
-        if sm.currentUser != 0:
-            print("hello ", name)
+        if not sm.findUser(name):
+            print('I have no idea who daduck you are')
+        else:
+            password = input("password: ").rstrip("\n")
+            sm.logIn(name, password)
+            if sm.currentUser != 0:
+                print("hello ", name)
+            else:
+                print('wrong password')
 
     elif option == "log out":
         name = sm.currentUser.name
@@ -28,22 +33,23 @@ def manage(option, sm):
         print('bye ', name)
 
     elif option == "send message":
-        name = input("name of user: ").rstrip("\n")
-        message = input("message: ").rstrip("\n")
-        m = [0]*sm.currentUser.messageSize
-        for i in range(len(message)):
-            m[i] = int(message[i])
-        sm.sendMessage(m, name)
+        if sm.currentUser == 0:
+            print('You are not logged in')
+        else:
+            sender = input("name of sender: ").rstrip("\n")
+            receiver = input("name of receiver: ").rstrip("\n")
+            message = input("message: ").rstrip("\n")
+            sm.sendMessage(message, sender, receiver)
 
     elif option == "verify message":
-        message = int(input("message: ").rstrip("\n"))
+        message = int(input("number of the message: ").rstrip("\n"))
         print(sm.verifyDocument(message))
 
     elif option == "current user":
         print(sm.currentUser.name)
 
     elif option == "see message":
-        message = int(input("message: ").rstrip("\n"))
+        message = int(input("number of message: ").rstrip("\n"))
         print(sm.seeMessage(message))
 
     else:
@@ -67,6 +73,16 @@ def getLetterFromCode(code):
 
 
 if __name__ == '__main__':
+
+    opt = input('Option: ').rstrip('\n')
+    while opt != "exit":
+        manage(opt)
+        opt = input('Option: ').rstrip('\n')
+
+
+
+
+    '''
     R = Rainbow.Rainbow(8)  # the message size is gonna be 27 = 33 - 6
 
     message = input("say message: ").rstrip('\n')
@@ -123,7 +139,7 @@ if __name__ == '__main__':
             if not R.verify(y[i*rainbowSize:(i+1)*rainbowSize], x[i]):
                 verify = False
                 break
-        print(verify)
+        print(verify)'''
 
     # hey i am a very very very very very very very very big message i think but im not really sure
 

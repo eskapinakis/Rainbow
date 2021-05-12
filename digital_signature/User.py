@@ -4,18 +4,14 @@ from digital_signature import Message
 
 class User:
 
-    rainbow = 0
     name = ""
     password = ""
+    rainbow = Rainbow.Rainbow(8)  # message size will be 33 - 6 = 27
     #  all the messages sent have to have the same size so decide now
     #  a message has the actual message, signature and the name of the user - [message, signature, user]
     messagesReceived = []
-    messagesSent = []
-    messageSize = 0
 
-    def __init__(self, name, message_size, password):
+    def __init__(self, name='bob', password=0):
         self.name = name
         self.password = password
-        self.messageSize = message_size
-        self.rainbow = Rainbow.Rainbow(8, message_size+1, 6)  # +1 because you take 1 in the rainbow
 

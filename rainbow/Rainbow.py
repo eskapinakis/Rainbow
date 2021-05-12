@@ -2,6 +2,7 @@
 import random as rand  # to generate pseudo-random numbers
 from pyfinite import ffield as ff  # to make calculations with field k of order 2^n
 from pyfinite import genericmatrix as gm  # to make operations with matries in
+import hashlib
 
 
 class Rainbow:
@@ -26,7 +27,7 @@ class Rainbow:
     publicKey = 0
     privateKey = 0
 
-    def __init__(self, power, message_size, partition_size):
+    def __init__(self, power, message_size=33, partition_size=6):
 
         # Create a field of size 2^power
         self.K = ff.FField(power)
@@ -37,7 +38,7 @@ class Rainbow:
         self.u = partition_size  # u-1 is also the number of Rainbow layers
         m = int(message_size / (partition_size - 1))
         self.v = [0] * partition_size
-        self.v[0] = 1  # rand.randint(1, m)
+        self.v[0] = 6  # rand.randint(1, m)
         for i in range(1, self.u - 1):
             self.v[i] = rand.randint(self.v[i - 1] + 1, m * (i + 1) - 1)
         self.v[partition_size - 1] = self.n  # The last element has to equal the message size
@@ -246,6 +247,7 @@ class Rainbow:
         # At some point in calculation of F^-1 the system may not have a solution
         # When that happens, guess other initial v[0] Vinegar variables
         # If the number of layers is not too high, we'll find a solution with high probability
+
         succeed = False
         while not succeed:
             try:
