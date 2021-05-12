@@ -71,7 +71,7 @@ class Announcements:
         return title in self.announcements.keys()
 
     # makes an announcement
-    # the name can be your name or whatever you want you weirdo
+    # the name can be your name or whatever you want
     def makeAnnouncement(self, title, text):
         signature = self.__signDocument(text)
         announcement = Announcement.Announcement(self.currentUser.name, title, signature[0], signature[1])
@@ -81,13 +81,18 @@ class Announcements:
     # see an announcement
     def seeAnnouncement(self, title):
         if not self.isAnnouncement(title):
-            return False
+            return "There is no announcement with that title"
         announcement = self.announcements[title]
         document = announcement.document
-        text = ''
+        text = 'message: '
         for i in document:
             text += self.getLetterFromCode(i)
-        return text
+        k = len(announcement.signature)
+        word = ""
+        for i in range(k):
+            for j in announcement.signature[i]:
+                word += chr(j)
+        return [text, announcement.title, word]
 
     # verifies if the name of the announcer is legit
     def verifyAnnouncement(self, title, name):
@@ -98,24 +103,11 @@ class Announcements:
         # return signature
         k = int(len(document) / user.rainbowSize + 0.5) # number of blocks
         n = user.rainbowSize
-        # print('k: ', k)
-        # print('size document: ', len(document))
-        # print('n: ', n)
-        # '''
-        # if announcement.isSmallerThanRainbow:
-        #    return user.rainbow.verify(document, signature[0])
-        # else:
-        for i in range(k):
-            # print(user.rainbow.FTilde(signature[i]))
-            # print('signature: ', signature[i])
-            # print(len(signature[i]))
-            # print('document: ', document[i*n:(i+1)*n])
+        
+        for i in range(k):  # verify each piece of signature
             if not user.rainbow.verify(document[i*n:(i+1)*n], signature[i]):
                 return False
-            # print(user.rainbow.FTilde(signature[i]))
-            # print(document)  #
         return True
-        # '''
 
     def seeAnnouncements(self):
         return list(self.announcements.keys())

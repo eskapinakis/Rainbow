@@ -2,7 +2,6 @@
 import random as rand  # to generate pseudo-random numbers
 from pyfinite import ffield as ff  # to make calculations with field k of order 2^n
 from pyfinite import genericmatrix as gm  # to make operations with matries in
-import hashlib
 
 
 class Rainbow:
