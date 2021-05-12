@@ -1,4 +1,4 @@
-from digital_signature import User
+from announcements import User
 from digital_signature import Message
 from rainbow import Rainbow
 

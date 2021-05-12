@@ -1,75 +1,99 @@
 # from rainbow import Rainbow
-from digital_signature import SignatureManager
+from announcements import Announcements
 # from digital_signature import User
 
-sm = SignatureManager.SignatureManager()
+Announcer = Announcements.Announcements()
 
 
 def manage(option):
     if option == "new user":
         name = input("name: ").rstrip("\n")
-        password = input("password: ").rstrip("\n")
-        if not sm.newUser(name, password):  # if there is someone with that name already
+        if Announcer.isUser(name):  # if there is someone with that name already
             print("There is someone with that name already")
+        else:
+            password = input("password: ").rstrip("\n")
+            Announcer.newUser(name, password)
 
     elif option == "see users":
-        sm.seeUsers()
+        for user in Announcer.seeUsers():
+            print(user)
 
     elif option == "log in":
         name = input("name: ").rstrip("\n")
-        if not sm.findUser(name):
+        if not Announcer.isUser(name):
             print('I have no idea who daduck you are')
         else:
             password = input("password: ").rstrip("\n")
-            sm.logIn(name, password)
-            if sm.currentUser != 0:
+            if Announcer.logIn(name, password) != 0:
                 print("hello ", name)
             else:
                 print('wrong password')
 
     elif option == "log out":
-        name = sm.currentUser.name
-        sm.logOut()
-        print('bye ', name)
+        if not Announcer.log:
+            print("You are not logged in you banana")
+        else:
+            print('bye ', Announcer.currentUser.name)
+            Announcer.logOut()
 
-    elif option == "send message":
-        if sm.currentUser == 0:
+    elif option == "announce":
+        if Announcer.currentUser == 0:
             print('You are not logged in')
         else:
-            sender = input("name of sender: ").rstrip("\n")
-            receiver = input("name of receiver: ").rstrip("\n")
-            message = input("message: ").rstrip("\n")
-            sm.sendMessage(message, sender, receiver)
+            title = input("title of the announcement: ").rstrip("\n")
+            if Announcer.isAnnouncement(title):
+                print("No")
+            else:
+                text = input("announcement: ").rstrip("\n")
+                # print("signature: ", chr(a) for a in Announcer.makeAnnouncement(title, text)[])
+                # print("signature: ", Announcer.makeAnnouncement(title, text))
+                signature = Announcer.makeAnnouncement(title, text)
+                k = len(signature)
+                word = ""
+                for i in range(k):
+                    for j in signature[i]:
+                        word += chr(j)
+                print("signature: ", word)
 
-    elif option == "verify message":
-        message = int(input("number of the message: ").rstrip("\n"))
-        print(sm.verifyDocument(message))
+    elif option == "verify":
+        title = input("title of the announcement: ").rstrip("\n")
+        if not Announcer.isAnnouncement(title):
+            print('Not real')
+        name = input("name of user: ").rstrip("\n")
+        if not Announcer.isUser(name):
+            print('Imaginary friend')
+        print(Announcer.verifyAnnouncement(title, name))
 
-    elif option == "current user":
-        print(sm.currentUser.name)
+    elif option == "see":
+        announcement = input("title of the announcement: ").rstrip("\n")
+        print(Announcer.seeAnnouncement(announcement))
 
-    elif option == "see message":
-        message = int(input("number of message: ").rstrip("\n"))
-        print(sm.seeMessage(message))
+    elif option == "see titles":
+        for title in Announcer.seeAnnouncements():
+            print(title)
+
+    elif option == 'fake':
+        title = input("title of the announcement: ").rstrip("\n")
+        text = input("announcement: ").rstrip("\n")
+        # print("signature: ", chr(a) for a in Announcer.makeAnnouncement(title, text)[])
+        return False
+
+    elif option == "help":
+        print('The available commands are:')
+        print(' - new user')
+        print(' - log in')
+        print(' - log out')
+        print(' - see titles')
+        print(' - see users')
+        print(' - see')
+        print(' - verify')
+        print(' - announce')
+        # print(' - fake')
+        print(' - exit')
 
     else:
-        print(option, 'is not a valid command')
-
-
-# returns a number for each letter
-def getLetterCode(letter):
-    if letter == ' ':
-        return 26
-    return ord(letter) - 97  # returns order of letter in the alphabet starting from 0..25
-
-
-def getLetterFromCode(code):
-    if code == 26:
-        return ' '
-    elif code == 27:
-        return ''
-    else:
-        return chr(97+code)
+        print(option, 'is not a valid command.')
+        print('Type help for a list of available commands.')
 
 
 if __name__ == '__main__':
