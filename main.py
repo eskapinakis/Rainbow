@@ -60,7 +60,8 @@ def manage(option):
         name = input("name of user: ").rstrip("\n")   # get user name to verify
         if not Announcer.isUser(name):    # if the user does not exist
             print('Imaginary friend')
-        print(Announcer.verifyAnnouncement(title, name))
+        else:
+            print(Announcer.verifyAnnouncement(title, name))
 
     elif option == "see ann":  # see announcements
         announcement = input("title of the announcement: ").rstrip("\n")
