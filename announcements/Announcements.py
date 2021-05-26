@@ -84,7 +84,7 @@ class Announcements:
             return "There is no announcement with that title"
         announcement = self.announcements[title]
         document = announcement.document
-        text = 'message: '
+        text = ""
         for i in document:
             text += self.getLetterFromCode(i)
         k = len(announcement.signature)
