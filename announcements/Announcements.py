@@ -2,7 +2,6 @@ from announcements import User, Announcement
 
 
 class Announcements:
-
     users = []
     announcements = {}
     currentUser = 0
@@ -84,7 +83,7 @@ class Announcements:
             return "There is no announcement with that title"
         announcement = self.announcements[title]
         document = announcement.document
-        text = ""
+        text = ''
         for i in document:
             text += self.getLetterFromCode(i)
         k = len(announcement.signature)
@@ -101,11 +100,11 @@ class Announcements:
         signature = announcement.signature
         user = self.__findUser(name)
         # return signature
-        k = int(len(document) / user.rainbowSize + 0.5) # number of blocks
+        k = int(len(document) / user.rainbowSize + 0.5)  # number of blocks
         n = user.rainbowSize
-        
+
         for i in range(k):  # verify each piece of signature
-            if not user.rainbow.verify(document[i*n:(i+1)*n], signature[i]):
+            if not user.rainbow.verify(document[i * n:(i + 1) * n], signature[i]):
                 return False
         return True
 

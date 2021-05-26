@@ -2,6 +2,7 @@
 import random as rand  # to generate pseudo-random numbers
 from pyfinite import ffield as ff  # to make calculations with field k of order 2^n
 from pyfinite import genericmatrix as gm  # to make operations with matries in
+import hashlib
 
 
 class Rainbow:
@@ -37,7 +38,7 @@ class Rainbow:
         self.u = partition_size  # u-1 is also the number of Rainbow layers
         m = int(message_size / (partition_size - 1))
         self.v = [0] * partition_size
-        self.v[0] = 6  # rand.randint(1, m)
+        self.v[0] = rand.randint(1, m)
         for i in range(1, self.u - 1):
             self.v[i] = rand.randint(self.v[i - 1] + 1, m * (i + 1) - 1)
         self.v[partition_size - 1] = self.n  # The last element has to equal the message size
