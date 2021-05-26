@@ -53,7 +53,7 @@ def manage(option):
                         word += chr(j)
                 print("signature: ", word)
 
-    elif option == "verify":   
+    elif option == "verify":
         title = input("title of the announcement: ").rstrip("\n")  # get announcement title
         if not Announcer.isAnnouncement(title):
             print('Not real')
@@ -68,7 +68,7 @@ def manage(option):
         var = Announcer.seeAnnouncement(announcement)
         print('----------------------------------')
         print("title: ", var[1])
-        print(var[0])
+        print("message: ", var[0])
         print("signature: ", var[2])
         print('----------------------------------')
 
